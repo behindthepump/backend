@@ -7,9 +7,16 @@ import v1Router from "./routes/index.js";
 
 const app = express();
 
+// In production set CORS_ORIGIN to the frontend URL(s), comma-separated
+// (e.g. "https://app.behindthepump.com"). Unset -> reflect the request origin
+// (fine for local dev).
+const corsOrigins = process.env.CORS_ORIGIN?.split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: true,
+    origin: corsOrigins && corsOrigins.length ? corsOrigins : true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]

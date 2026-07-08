@@ -1,0 +1,22 @@
+# Render Blueprint for the backend API.
+# Deploy via Render → New → Blueprint (point at this repo), or configure a Web
+# Service manually with the same settings.
+services:
+  - type: web
+    name: behindthepump-backend
+    runtime: node
+    plan: free
+    region: singapore # closest Render region to India
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      # Base64 of the service-account key JSON — set as a secret, do NOT commit.
+      #   base64 -i serviceAccount.json | tr -d '\n'
+      - key: FIREBASE_SERVICE_ACCOUNT_BASE64
+        sync: false
+      # Optional: lock CORS to the deployed frontend origin(s), comma-separated.
+      - key: CORS_ORIGIN
+        sync: false
+      - key: NODE_VERSION
+        value: "20"
