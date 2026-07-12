@@ -25,8 +25,8 @@ all direct access (see [04-auth](04-auth.md#firestore-rules)).
 
 ```
 users/{uid}                  role, status (pending|active|declined), email,
-                             name, name_lower, age, gender, height,
-                             starting_weight, target_weight, bmr,
+                             name, name_lower, name_prefixes[], age, gender,
+                             height, starting_weight, target_weight, bmr,
                              program_start_date, workout_frequency (2|3),
                              requested_at        (profile fields absent for coach)
 users/{uid}/calories/{date}  calories, notes            doc id = YYYY-MM-DD
@@ -62,9 +62,11 @@ All under `/v1`, all requiring `Authorization: Bearer <id-token>`:
 
 ## Scale design (500+ clients)
 
-The coach's roster is **cursor-paginated** and **prefix-searched** on
-`name_lower` (composite index `role + status + name_lower`, in
-`firestore.indexes.json`). Per-page stats are computed server-side
+The coach's roster is **cursor-paginated** (ordered by `name_lower`) and
+**word-prefix searched**: every name write stores `name_prefixes` (each
+prefix of each word, so "kum" finds "Jatin Kumar") and search filters with
+`array-contains` on the last token typed. Both composite indexes live in
+`firestore.indexes.json`. Per-page stats are computed server-side
 (`domain/stats.ts`) from each client's logs; the drill-in fetches one
 client's full logs on demand. Nothing coach-side is bulk-loaded.
 

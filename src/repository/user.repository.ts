@@ -27,6 +27,17 @@ export type ProfileFields = Pick<
   "name" | "age" | "gender" | "height" | "starting_weight" | "target_weight" | "bmr" | "workout_frequency"
 >;
 
+// Every prefix of every word in the name, lowercased - lets the roster
+// search find "Jatin Kumar" from "kum". A name is ~20 chars, so this is a
+// handful of short strings per doc.
+export function namePrefixes(name: string): string[] {
+  const prefixes = new Set<string>();
+  for (const word of name.toLowerCase().split(/\s+/).filter(Boolean)) {
+    for (let i = 1; i <= word.length; i++) prefixes.add(word.slice(0, i));
+  }
+  return [...prefixes];
+}
+
 export class UserRepository {
   private col = db.collection("users");
 
@@ -36,8 +47,9 @@ export class UserRepository {
   }
 
   // One page of active clients ordered by name, optionally filtered by a
-  // name prefix. Cursor is the last doc id of the previous page. Requires
-  // the (role, status, name_lower) composite index (firestore.indexes.json).
+  // word-prefix search ("kum" matches "Jatin Kumar" via name_prefixes).
+  // Cursor is the last doc id of the previous page. Requires the composite
+  // indexes in firestore.indexes.json.
   async listActiveClientsPage(opts: {
     search: string;
     cursor: string | null;
@@ -50,7 +62,10 @@ export class UserRepository {
 
     const search = opts.search.trim().toLowerCase();
     if (search) {
-      query = query.startAt(search).endAt(`${search}`);
+      // array-contains takes one value, so a multi-word search uses the
+      // last token - the word the coach is currently narrowing by.
+      const token = search.split(/\s+/).pop()!;
+      query = query.where("name_prefixes", "array-contains", token);
     }
     if (opts.cursor) {
       const cursorSnap = await this.col.doc(opts.cursor).get();
@@ -99,7 +114,8 @@ export class UserRepository {
       requested_at: new Date().toISOString(),
       email: fields.email,
       name: fields.name,
-      name_lower: fields.name.toLowerCase(), // for roster prefix search
+      name_lower: fields.name.toLowerCase(), // roster sort order
+      name_prefixes: namePrefixes(fields.name), // roster word-prefix search
       age: fields.age,
       gender: fields.gender,
       height: fields.height,
@@ -123,7 +139,11 @@ export class UserRepository {
   }
 
   async updateProfile(uid: string, fields: ProfileFields): Promise<void> {
-    await this.col.doc(uid).update({ ...fields, name_lower: fields.name.toLowerCase() });
+    await this.col.doc(uid).update({
+      ...fields,
+      name_lower: fields.name.toLowerCase(),
+      name_prefixes: namePrefixes(fields.name)
+    });
   }
 
   async deleteDoc(uid: string): Promise<void> {
