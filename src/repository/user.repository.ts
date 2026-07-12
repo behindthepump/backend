@@ -18,7 +18,8 @@ function toUser(uid: string, data: DocumentData): User {
     workout_frequency: data.workout_frequency === 2 ? 2 : 3,
     // Docs created before self-signup existed are active clients.
     status: data.status === "pending" || data.status === "declined" ? data.status : "active",
-    requested_at: data.requested_at
+    requested_at: data.requested_at,
+    approved_at: data.approved_at
   };
 }
 
@@ -130,7 +131,10 @@ export class UserRepository {
     await this.col.doc(uid).update({
       status: "active",
       program_start_date: programStartDate,
-      workout_frequency: workoutFrequency
+      workout_frequency: workoutFrequency,
+      // First day logging is possible - Monday anchoring can place week 1
+      // days before this, and those must not read as "missed".
+      approved_at: new Date().toISOString().slice(0, 10)
     });
   }
 

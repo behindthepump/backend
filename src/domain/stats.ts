@@ -30,7 +30,7 @@ function addDays(dateStr: string, days: number): string {
 
 // Raw program week for a date relative to a start date (can be <1 or >12).
 // Rounded day-diff absorbs DST offsets.
-function getWeekForDate(dateStr: string, startDateStr: string): number {
+export function getWeekForDate(dateStr: string, startDateStr: string): number {
   const diffDays = Math.round(
     (parseDate(dateStr).getTime() - parseDate(startDateStr).getTime()) / MS_PER_DAY
   );

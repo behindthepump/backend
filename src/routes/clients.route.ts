@@ -10,7 +10,7 @@ import { LogService } from "../service/log.service.js";
 const users = new UserRepository();
 const logs = new LogRepository();
 const clients = new ClientsController(new ClientService(users, logs));
-const logsController = new LogsController(new LogService(logs));
+const logsController = new LogsController(new LogService(logs, users));
 
 const router = Router();
 router.use(authMiddleware);

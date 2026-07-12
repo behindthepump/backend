@@ -40,6 +40,16 @@ export class LogRepository {
     await this.user(uid).collection("calories").doc(date).set(data);
   }
 
+  async hasCalorie(uid: string, date: string): Promise<boolean> {
+    const snap = await this.user(uid).collection("calories").doc(date).get();
+    return snap.exists;
+  }
+
+  async isWorkoutCompleted(uid: string, key: string): Promise<boolean> {
+    const snap = await this.user(uid).collection("workouts").doc(key).get();
+    return snap.exists && snap.data()?.completed === true;
+  }
+
   async setWorkout(
     uid: string,
     key: string,
