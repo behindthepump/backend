@@ -21,10 +21,10 @@ if (!projectId) {
   process.exit(1);
 }
 
-console.log(`Deploying Firestore rules to "${projectId}"...`);
+console.log(`Deploying Firestore rules + indexes to "${projectId}"...`);
 const res = spawnSync(
   "npx",
-  ["firebase", "deploy", "--only", "firestore:rules", "--project", projectId],
+  ["firebase", "deploy", "--only", "firestore", "--project", projectId],
   { stdio: "inherit", env: { ...process.env, GOOGLE_APPLICATION_CREDENTIALS: keyPath } }
 );
 process.exit(res.status ?? 1);

@@ -48,18 +48,6 @@ export class LogRepository {
     await this.user(uid).collection("workouts").doc(key).set(data);
   }
 
-  // Seed the full 12-week plan in one batch (used at client creation).
-  async seedWorkouts(
-    uid: string,
-    entries: { key: string; data: Omit<WorkoutLog, "id" | "user_id"> }[]
-  ): Promise<void> {
-    const batch = db.batch();
-    for (const { key, data } of entries) {
-      batch.set(this.user(uid).collection("workouts").doc(key), data);
-    }
-    await batch.commit();
-  }
-
   // Delete every calorie + workout doc for a user (client-removal cascade).
   async deleteAllForUser(uid: string): Promise<void> {
     const [calories, workouts] = await Promise.all([

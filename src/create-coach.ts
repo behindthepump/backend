@@ -46,8 +46,7 @@ async function main() {
   await db.doc(`users/${uid}`).set({
     role: "coach",
     email,
-    name: "Coach",
-    must_change_password: false
+    name: "Coach"
   });
 
   console.log(`Coach account created: ${email}`);

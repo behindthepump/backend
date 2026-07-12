@@ -15,13 +15,18 @@ const logsController = new LogsController(new LogService(logs));
 const router = Router();
 router.use(authMiddleware);
 
-// Coach-only roster management.
+// Coach-only roster management. Clients are created by self-signup
+// (POST /v1/me/onboarding); the coach approves or declines the request.
+// GET / is paginated (?search=&cursor=&limit=) with per-client stats.
 router.get("/", requireCoach, clients.list);
-router.post("/", requireCoach, clients.create);
+router.get("/requests", requireCoach, clients.listRequests);
+router.get("/:uid/data", requireCoach, clients.getData);
+router.post("/:uid/approve", requireCoach, clients.approve);
+router.post("/:uid/decline", requireCoach, clients.decline);
 router.delete("/:uid", requireCoach, clients.remove);
 router.put("/:uid/profile", requireCoach, clients.updateProfile);
 
-// Log writes: a client for themselves, the coach for anyone (checked in the service).
+// Log writes: owner-only - even the coach monitors read-only.
 router.put("/:uid/calories/:date", logsController.saveCalorie);
 router.put("/:uid/workouts/:key", logsController.saveWorkout);
 

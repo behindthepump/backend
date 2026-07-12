@@ -1,23 +1,37 @@
-import { randomBytes } from "node:crypto";
 import type { WorkoutName } from "./types.js";
 
-// The fixed 12-week program: three workouts per week with set burn values.
-export const WORKOUT_DEFINITIONS: { name: WorkoutName; calories: number }[] = [
-  { name: "Lower Body", calories: 210 },
-  { name: "Upper Body Push", calories: 262.5 },
-  { name: "Upper Body Pull", calories: 210 }
-];
+// Workout slots per coach-set weekly frequency. Burn calories are entered
+// by the client at check-off, not fixed here.
+export const WORKOUT_SLOTS: Record<2 | 3, WorkoutName[]> = {
+  2: ["Lower Body", "Upper Body"],
+  3: ["Lower Body", "Upper Body Push", "Upper Body Pull"]
+};
+
+export const ALL_WORKOUT_NAMES = new Set<string>([...WORKOUT_SLOTS[2], ...WORKOUT_SLOTS[3]]);
+
+export const MAX_WORKOUT_CALORIES = 3000;
 
 export const PROGRAM_WEEKS = 12;
 
-// Deterministic doc id for a workout: e.g. "w3_upper-body-push".
-export function workoutKey(week: number, workoutName: string): string {
-  return `w${week}_${workoutName.toLowerCase().replace(/\s+/g, "-")}`;
+// Monday of the week containing the given YYYY-MM-DD date (Week 1 anchor).
+export function mondayOf(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y!, m! - 1, d!);
+  const day = date.getDay();
+  date.setDate(date.getDate() - day + (day === 0 ? -6 : 1));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-// Random temporary password: unambiguous characters, 12 long.
-export function generateTempPassword(): string {
-  const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  const bytes = randomBytes(12);
-  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+// Mifflin-St Jeor BMR from the onboarding profile. "Other" gender uses the
+// midpoint of the male/female constants. Coach can override via profile edit.
+export function computeBmr(fields: {
+  gender: string;
+  height: number; // cm
+  starting_weight: number; // kg
+  age: number;
+}): number {
+  const base = 10 * fields.starting_weight + 6.25 * fields.height - 5 * fields.age;
+  const offset = fields.gender === "Male" ? 5 : fields.gender === "Female" ? -161 : -78;
+  return Math.round(base + offset);
 }

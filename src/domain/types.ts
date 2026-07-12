@@ -1,6 +1,10 @@
 // Shared data shapes, mirroring the frontend's types so the API responses
 // drop straight into the client's existing state.
-export type WorkoutName = "Lower Body" | "Upper Body Push" | "Upper Body Pull";
+// 2-day split uses Lower/Upper; 3-day uses Lower/Push/Pull (see program.ts).
+export type WorkoutName = "Lower Body" | "Upper Body" | "Upper Body Push" | "Upper Body Pull";
+
+// Lifecycle of a self-signed-up client: pending until the coach approves.
+export type UserStatus = "pending" | "active" | "declined";
 
 export interface User {
   id: string; // Firebase uid
@@ -8,10 +12,14 @@ export interface User {
   name: string;
   age: number;
   gender: string;
+  height: number; // cm, client-entered at onboarding (drives BMR)
   starting_weight: number;
   target_weight: number;
   bmr: number;
-  program_start_date: string; // YYYY-MM-DD, Monday of Week 1
+  program_start_date: string; // YYYY-MM-DD, Monday of Week 1 (set at approval)
+  workout_frequency: 2 | 3; // coach-set workouts per week (set at approval)
+  status: UserStatus;
+  requested_at?: string; // ISO timestamp of the signup request
 }
 
 export interface DailyCalorie {
@@ -42,5 +50,6 @@ export interface Session {
   userId: string;
   role: "coach" | "client";
   name: string;
-  mustChangePassword: boolean;
+  // "new" = authed but no user doc yet (signup before onboarding)
+  status: UserStatus | "new";
 }

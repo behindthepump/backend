@@ -1,72 +1,14 @@
 rules_version = '2';
 
-// Access control per docs/04-auth.md: the coach (role:coach custom claim)
-// manages everything; a client touches only their own data. Data-shape
-// validation lives in the app - these rules decide who can touch what.
+// All data access goes through the backend API, which uses the Firebase
+// Admin SDK and bypasses these rules entirely. No browser ever talks to
+// Firestore directly, so everything is denied: this only closes the
+// direct-access surface (the web API key is public and clients hold real
+// Firebase Auth sessions via Google sign-in).
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isCoach() {
-      return request.auth != null && request.auth.token.role == 'coach';
-    }
-
-    function isOwner(uid) {
-      return request.auth != null && request.auth.uid == uid;
-    }
-
-    match /users/{uid} {
-      // Owner reads their own doc; coach reads (and lists) everyone
-      allow get: if isOwner(uid) || isCoach();
-      allow list: if isCoach();
-
-      // Only the coach creates or deletes accounts and edits profiles.
-      // The single thing a client may change is clearing their own
-      // must_change_password flag after the forced password change.
-      allow create, delete: if isCoach();
-      allow update: if isCoach()
-        || (isOwner(uid)
-            && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['must_change_password'])
-            && request.resource.data.must_change_password == false);
-
-      // Logs: the owner and the coach can read and write. The owner path
-      // additionally requires the user doc to still exist, so a deleted
-      // client's orphaned Auth account gets nothing. Doc ids and shapes
-      // are constrained so a direct API client can't store junk.
-      function isActiveOwner(ownerUid) {
-        return isOwner(ownerUid)
-          && exists(/databases/$(database)/documents/users/$(ownerUid));
-      }
-
-      match /calories/{date} {
-        allow read: if isActiveOwner(uid) || isCoach();
-        allow create, update: if (isActiveOwner(uid) || isCoach())
-          && date.matches('^\\d{4}-\\d{2}-\\d{2}$')
-          && request.resource.data.keys().hasOnly(['calories', 'notes'])
-          && request.resource.data.calories is number
-          && request.resource.data.calories >= 0
-          && request.resource.data.calories <= 10000
-          && request.resource.data.notes is string;
-        // Deletes only happen through the coach's client-removal cascade
-        allow delete: if isCoach();
-      }
-
-      match /workouts/{key} {
-        allow read: if isActiveOwner(uid) || isCoach();
-        allow create, update: if (isActiveOwner(uid) || isCoach())
-          && key.matches('^w\\d{1,2}_[a-z-]+$')
-          && request.resource.data.keys().hasOnly(
-               ['week', 'workout_name', 'calories_burned', 'completed', 'completed_at'])
-          && request.resource.data.week is int
-          && request.resource.data.week >= 1
-          && request.resource.data.week <= 12
-          && request.resource.data.workout_name is string
-          && request.resource.data.calories_burned is number
-          && request.resource.data.completed is bool
-          && (request.resource.data.completed_at is string
-              || request.resource.data.completed_at == null);
-        allow delete: if isCoach();
-      }
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

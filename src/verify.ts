@@ -14,10 +14,17 @@ async function main() {
     console.log("✗ No coach account yet - run: npm run create-coach -- <email> <password>");
   }
 
+  const foods = await db.doc("reference/foods").get();
+  console.log(
+    foods.exists
+      ? "✓ Food reference seeded."
+      : "✗ Food reference missing - run: npm run seed:foods"
+  );
+
   console.log(
     "\nNot checkable from here (confirm in the Firebase console):\n" +
-      "  - Email/Password sign-in is enabled\n" +
-      "  - Firestore security rules are deployed (npm run deploy:rules)"
+      "  - Email/Password (coach) AND Google (clients) sign-in are enabled\n" +
+      "  - Firestore rules + indexes are deployed (npm run deploy:rules)"
   );
 }
 

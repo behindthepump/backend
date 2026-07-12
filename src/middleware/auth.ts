@@ -16,6 +16,7 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
     .then((decoded) => {
       req.userId = decoded.uid;
       req.role = decoded.role === "coach" ? "coach" : "client";
+      req.email = decoded.email ?? "";
       next();
     })
     .catch(() => next(Unauthorized("Invalid or expired session.")));

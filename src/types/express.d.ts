@@ -19,6 +19,7 @@ declare global {
       // Populated by authMiddleware after verifying the Firebase ID token.
       userId: string;
       role: "coach" | "client";
+      email: string;
     }
     interface Response {
       sendSuccess: (props: SendSuccessProps) => void;

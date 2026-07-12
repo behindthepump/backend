@@ -1,3 +1,5 @@
+import { ALL_WORKOUT_NAMES, MAX_WORKOUT_CALORIES } from "../domain/program.js";
+import type { WorkoutName } from "../domain/types.js";
 import { LogRepository } from "../repository/log.repository.js";
 import { BadRequest, Forbidden } from "../utils/errors.js";
 
@@ -45,15 +47,20 @@ export class LogService {
 
     const week = Number(body.week);
     if (!Number.isInteger(week) || week < 1 || week > 12) throw BadRequest("Week must be 1-12.");
-    if (typeof body.workout_name !== "string") throw BadRequest("workout_name is required.");
+    if (typeof body.workout_name !== "string" || !ALL_WORKOUT_NAMES.has(body.workout_name)) {
+      throw BadRequest("Unknown workout name.");
+    }
+    // Burn calories are self-reported by the client at check-off.
     const calories_burned = Number(body.calories_burned);
-    if (!Number.isFinite(calories_burned)) throw BadRequest("calories_burned must be a number.");
+    if (!Number.isFinite(calories_burned) || calories_burned < 0 || calories_burned > MAX_WORKOUT_CALORIES) {
+      throw BadRequest(`calories_burned must be between 0 and ${MAX_WORKOUT_CALORIES}.`);
+    }
     const completed = body.completed === true;
     const completed_at = typeof body.completed_at === "string" ? body.completed_at : null;
 
     await this.logs.setWorkout(uid, key, {
       week,
-      workout_name: body.workout_name as never,
+      workout_name: body.workout_name as WorkoutName,
       calories_burned,
       completed,
       completed_at

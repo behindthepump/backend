@@ -1,56 +1,54 @@
-# Authentication & Data (Firebase)
+# Auth & Access
 
-Both roles sign in with **email + password** via **Firebase Auth**. All app data lives in
-**Firestore**. There is no custom server — privileged setup runs as a local script with the
-Firebase Admin SDK, and access control is enforced by **Firestore security rules**.
+Identity is Firebase Auth; authorization is enforced by the backend API on
+every request. The data model lives in
+[03-architecture](03-architecture.md#data-model-firestore).
 
 ## Accounts
 
-- **Coach**: exactly one account, created offline by a script — `npm run create-coach -- <email> <password>` in `backend/`. The script also stamps a `role: coach` custom claim on the account. There is no in-app coach signup.
-- **Client**: created by the coach in the app.
+| Role | Sign-in | Created by |
+|------|---------|-----------|
+| Coach | Email + password | `npm run create-coach -- <email> <password>` — stamps a `role: coach` custom claim. No in-app signup. |
+| Client | Google only | Self-signup from the login screen |
 
-## Client onboarding flow
+Any verified token **without** the coach claim is a client. Only the coach
+has a password; "Forgot password" on the login screen sends Firebase's reset
+email (silently, so it never reveals which emails exist).
 
-1. Coach starts a program for a new client by entering their **email** (plus the existing profile fields).
-2. The app **auto-generates a temporary password** and creates the client's Auth account (via a secondary Firebase app instance, so the coach stays signed in).
-3. The email + password pair is shown to the coach **once**, with a single copy button that copies the pair together.
-4. Coach shares the pair with the client (outside the app).
-5. Client signs in with the pair and is **forced to a change-password screen** (a `must_change_password` flag on their Firestore user doc) — the app is unreachable until the password is changed.
-6. After changing it, the client uses the app normally.
+## Client lifecycle
 
-## Password reset
-
-- If a client forgets their password, the coach presses **Reset password** on the client's card (or the client uses "Forgot password" on the login screen).
-- Either path sends **Firebase's built-in password-reset email** to the client. No temp-password regeneration — resets go through the client's inbox.
-
-## Access control (Firestore security rules)
-
-- The coach is identified by the `role: coach` custom claim.
-- **Coach**: read/write all client docs and logs; only the coach can create/delete client docs and edit profiles.
-- **Client**: read own docs; write own calorie/workout logs; the only profile field a client can change is clearing their own `must_change_password` flag.
-- Data-shape rules (no future-dated logs, program bounds, value ranges) are validated in the app; the rules enforce **who** can touch **what**.
-
-## Data model (Firestore)
+A client's `status` field drives everything they can see:
 
 ```
-users/{uid}                  role, email, name, must_change_password,
-                             age, gender, starting_weight, target_weight,
-                             bmr, program_start_date   (profile fields absent for coach)
-users/{uid}/calories/{date}  calories, notes            (doc id = YYYY-MM-DD)
-users/{uid}/workouts/{key}   week, workout_name, calories_burned,
-                             completed, completed_at    (key = w{week}_{workout})
+(no user doc)          "new"       → onboarding form
+POST /me/onboarding →  pending     → waitlist screen
+coach approves      →  active      → the tracker
+coach declines      →  declined    → waitlist screen (declined copy);
+                                     approval still possible later
+coach deletes       →  (gone)      → next Google sign-in starts over at "new"
 ```
 
-## Known limitations
+`GET /v1/me` builds the session from the verified token (role) and the user
+doc (name, status).
 
-- Deleting a client removes all their Firestore data, but their Auth account can only be
-  deleted with the Admin SDK. The orphaned account can sign in but the rules deny it all
-  data (the app shows "account no longer active").
-- Because the orphaned Auth account survives, a deleted client's **email cannot be reused**
-  for a new client from the app. Free it by deleting the Auth user in the Firebase console
-  (Authentication → Users) or with the Admin SDK.
+## Who can do what
 
-## Local development
+| Action | Coach | Client |
+|--------|-------|--------|
+| Read all clients, requests, any client's logs | ✓ | – |
+| Approve / decline / delete clients | ✓ | – |
+| Edit any client's profile (metrics, BMR, split) | ✓ | – |
+| Write calorie / workout logs | – | own only |
+| Read own data | ✓ | ✓ |
+| Food reference | ✓ | ✓ |
 
-- The app runs against the **Firebase Emulator Suite** (Auth + Firestore) locally — no real
-  project needed until deployment. Real project config goes in `frontend/.env.local`.
+Log writes are deliberately **owner-only** — the coach monitors read-only
+and influences the plan through the profile, never the logs.
+
+## Firestore rules
+
+`firestore.rules` denies **all** direct reads and writes. Every access path
+goes through the API (Admin SDK, which bypasses rules); the rules exist only
+to close the direct-access surface, since the web API key is public and
+clients hold real Firebase sessions. Deploy with `npm run deploy:rules`
+(see [05-operations](05-operations.md#scripts)).

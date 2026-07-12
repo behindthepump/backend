@@ -8,25 +8,11 @@ export class AppDataService {
     private logs: LogRepository
   ) {}
 
-  // Coach gets every client and their logs; a client gets only their own.
-  getAppData = async (userId: string, role: "coach" | "client"): Promise<AppData> => {
-    if (role === "coach") {
-      const users = await this.users.listClients();
-      const perUser = await Promise.all(
-        users.map(async (u) => ({
-          calories: await this.logs.getCalories(u.id),
-          workouts: await this.logs.getWorkouts(u.id)
-        }))
-      );
-      return {
-        users,
-        dailyCalories: perUser.flatMap((p) => p.calories),
-        workoutLogs: perUser.flatMap((p) => p.workouts)
-      };
-    }
-
-    // Client: own doc only. A missing/non-client doc means the account was
-    // deleted - return nothing and let the UI show the inactive screen.
+  // The signed-in client's own bootstrap load. The coach's roster uses the
+  // paginated GET /v1/clients instead. A missing/non-client doc means the
+  // account was deleted - return nothing and let the UI show the inactive
+  // screen.
+  getAppData = async (userId: string): Promise<AppData> => {
     const user = await this.users.getClient(userId);
     if (!user) return { users: [], dailyCalories: [], workoutLogs: [] };
 

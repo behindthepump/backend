@@ -5,7 +5,7 @@ export class AppDataController {
   constructor(private appData: AppDataService) {}
 
   get = asyncHandler(async (req, res) => {
-    const data = await this.appData.getAppData(req.userId, req.role);
+    const data = await this.appData.getAppData(req.userId);
     res.sendSuccess({ data });
   });
 }
