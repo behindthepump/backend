@@ -14,8 +14,6 @@ function toUser(uid: string, data: DocumentData): User {
     target_weight: data.target_weight ?? 0,
     bmr: data.bmr ?? 0,
     program_start_date: data.program_start_date ?? "",
-    // Docs created before frequency existed default to the 3-day split.
-    workout_frequency: data.workout_frequency === 2 ? 2 : 3,
     // Docs created before self-signup existed are active clients.
     status: data.status === "pending" || data.status === "declined" ? data.status : "active",
     requested_at: data.requested_at,
@@ -25,7 +23,7 @@ function toUser(uid: string, data: DocumentData): User {
 
 export type ProfileFields = Pick<
   User,
-  "name" | "age" | "gender" | "height" | "starting_weight" | "target_weight" | "bmr" | "workout_frequency"
+  "name" | "age" | "gender" | "height" | "starting_weight" | "target_weight" | "bmr"
 >;
 
 // Every prefix of every word in the name, lowercased - lets the roster
@@ -127,11 +125,10 @@ export class UserRepository {
     });
   }
 
-  async activate(uid: string, programStartDate: string, workoutFrequency: 2 | 3): Promise<void> {
+  async activate(uid: string, programStartDate: string): Promise<void> {
     await this.col.doc(uid).update({
       status: "active",
       program_start_date: programStartDate,
-      workout_frequency: workoutFrequency,
       // First day logging is possible - Monday anchoring can place week 1
       // days before this, and those must not read as "missed".
       approved_at: new Date().toISOString().slice(0, 10)

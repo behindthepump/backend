@@ -113,24 +113,22 @@ export class ClientService {
   };
 
   // Coach accepts a request: sets the program start date (anchored to its
-  // Monday) and the weekly workout frequency. Declined clients can be
-  // approved later - the request stays in the table.
+  // Monday). Declined clients can be approved later - the request stays in
+  // the table.
   approve = async (
     uid: string,
-    body: { program_start_date?: unknown; workout_frequency?: unknown }
-  ): Promise<{ program_start_date: string; workout_frequency: 2 | 3 }> => {
+    body: { program_start_date?: unknown }
+  ): Promise<{ program_start_date: string }> => {
     const client = await this.users.getClient(uid);
     if (!client) throw NotFound("Client not found.");
     if (client.status === "active") throw Conflict("Client is already active.");
 
     const date = String(body.program_start_date ?? "");
     if (!DATE_RE.test(date)) throw BadRequest("program_start_date must be YYYY-MM-DD.");
-    const frequency = Number(body.workout_frequency);
-    if (frequency !== 2 && frequency !== 3) throw BadRequest("workout_frequency must be 2 or 3.");
 
     const monday = mondayOf(date);
-    await this.users.activate(uid, monday, frequency);
-    return { program_start_date: monday, workout_frequency: frequency };
+    await this.users.activate(uid, monday);
+    return { program_start_date: monday };
   };
 
   decline = async (uid: string): Promise<void> => {
@@ -157,9 +155,6 @@ export class ClientService {
     const error = metricsError(fields);
     if (error) throw BadRequest(error);
     if (!Number.isFinite(fields.bmr) || fields.bmr <= 0) throw BadRequest("BMR must be greater than 0.");
-    if (fields.workout_frequency !== 2 && fields.workout_frequency !== 3) {
-      throw BadRequest("workout_frequency must be 2 or 3.");
-    }
     await this.users.updateProfile(uid, { ...fields, name: fields.name.trim() });
   };
 }

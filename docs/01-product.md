@@ -23,13 +23,16 @@ sign-in — never a switch in the UI. See [04-auth](04-auth.md).
 - The current week number is always derived from the real date:
   `floor(days since start ÷ 7) + 1`, clamped to 1–12 for display. Before the
   start date the program is **not started**; past week 12 it is **completed**.
-- Each week has workout **slots** from the coach-chosen split (changeable
-  later; past weeks keep whatever was logged):
+- Every week offers **all workout sets from both splits**; the client
+  checks any mix that fits their schedule. The soft goal is 3 sessions a
+  week (the denominator on every meter). The two Lower Body days are
+  different routines and count separately:
 
-| Split | Slots per week |
-|-------|----------------|
-| 2-day | Lower Body, Upper Body |
-| 3-day | Lower Body, Upper Body Push, Upper Body Pull |
+| Group | Sets |
+|-------|------|
+| 2 Days/Week | Lower Body, Upper Body |
+| 3 Days/Week | Lower Body, Upper Body (Push), Upper Body (Pull) |
+| Personal | One free-form weekly entry: self-calculated total burn + notes (kcal joins the deficit, doesn't count as a session) |
 
 - Every slot has reference exercise routines in **Gym** and **Home** variants.
   These are display-only — the client flips a toggle in the UI; nothing is
@@ -55,9 +58,9 @@ mirrors this section):
 
 | Input | Rule |
 |-------|------|
-| Daily calories | 0–10,000 kcal, one entry per day, today or past only |
-| Workout burn | 0–3,000 kcal, entered by the client at check-off |
-| Workout weeks | Current or past weeks only; future weeks are locked |
+| Daily calories | 0–10,000 kcal, one entry per day, today or past only; past entries stay editable |
+| Workout burn | 0–3,000 kcal, prefilled with `round(BMR × 3.5 / 24)` (MET 3.5, ~1 h session), client-editable |
+| Workout weeks | Current or past weeks only; future weeks are locked; past weeks stay editable |
 | Profile metrics | Age 1–120, height 50–250 cm, target weight below starting |
 
 Validation is enforced server-side; the UI checks first for friendlier

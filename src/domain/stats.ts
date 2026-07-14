@@ -90,10 +90,13 @@ export function computeClientStats(
   }
 
   // Current-week activity (the "are they moving right now" signal).
+  // "Personal" is one weekly kcal total, not a countable session.
   let week_workouts_completed = 0;
   let week_days_logged = 0;
   if (program_status === "active") {
-    week_workouts_completed = completed.filter((w) => w.week === current_week).length;
+    week_workouts_completed = completed.filter(
+      (w) => w.week === current_week && w.workout_name !== "Personal"
+    ).length;
     const weekStart = addDays(user.program_start_date, (current_week - 1) * 7);
     for (let i = 0; i < 7; i++) {
       const d = addDays(weekStart, i);

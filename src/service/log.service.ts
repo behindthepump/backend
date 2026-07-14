@@ -6,7 +6,7 @@ import { UserRepository } from "../repository/user.repository.js";
 import { BadRequest, Forbidden } from "../utils/errors.js";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const WORKOUT_KEY_RE = /^w\d{1,2}_[a-z-]+$/;
+const WORKOUT_KEY_RE = /^w\d{1,2}_[a-z0-9-]+$/;
 
 export class LogService {
   constructor(private logs: LogRepository, private users: UserRepository) {}
@@ -36,16 +36,11 @@ export class LogService {
     const notes = typeof body.notes === "string" ? body.notes : "";
 
     // The server clock is UTC and clients may be ahead of it (Malaysia is
-    // UTC+8), so "future" and "past" get a one-day grace window instead of
-    // false rejections around midnight.
-    const utcToday = new Date().toISOString().slice(0, 10);
+    // UTC+8), so "future" gets a one-day grace window instead of false
+    // rejections around midnight. Past days are freely editable - the
+    // client holds themselves accountable.
     const utcTomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
     if (date > utcTomorrow) throw BadRequest("That day hasn't happened yet.");
-    // Past days are append-only: a missed day can be logged once, but only
-    // today's entry can be edited - history stays honest for the coach.
-    if (date < utcToday && (await this.logs.hasCalorie(uid, date))) {
-      throw Forbidden("Past entries are locked — only today's log can be edited.");
-    }
 
     await this.logs.setCalorie(uid, date, { calories, notes });
   };
@@ -72,25 +67,17 @@ export class LogService {
     }
     const completed = body.completed === true;
     const completed_at = typeof body.completed_at === "string" ? body.completed_at : null;
+    const notes = typeof body.notes === "string" ? body.notes.slice(0, 500) : "";
 
-    // Past weeks are append-only, mirroring daily logs: a missed workout can
-    // be checked off late (once), but completed past-week workouts lock.
-    // UTC "now" plus the client-favouring grace of treating only strictly
-    // earlier weeks as past (ahead-of-UTC timezones never get blocked early).
+    // Past weeks are freely editable; only future weeks are blocked. UTC
+    // "now" with the client-favouring grace of allowing one week ahead
+    // (ahead-of-UTC timezones never get blocked early).
     const userDoc = await this.users.getDoc(uid);
     const startDate = typeof userDoc?.program_start_date === "string" ? userDoc.program_start_date : "";
     if (startDate) {
       const utcToday = new Date().toISOString().slice(0, 10);
       const currentWeek = getWeekForDate(utcToday, startDate);
       if (week > currentWeek + 1) throw BadRequest("Future weeks unlock as you reach them.");
-      if (week < currentWeek) {
-        if (!completed) {
-          throw Forbidden("Past weeks are locked — completed workouts there can't be unchecked.");
-        }
-        if (await this.logs.isWorkoutCompleted(uid, key)) {
-          throw Forbidden("Past weeks are locked — that workout is already checked off.");
-        }
-      }
     }
 
     await this.logs.setWorkout(uid, key, {
@@ -98,7 +85,8 @@ export class LogService {
       workout_name: body.workout_name as WorkoutName,
       calories_burned,
       completed,
-      completed_at
+      completed_at,
+      notes
     });
   };
 }

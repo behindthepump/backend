@@ -20,8 +20,12 @@ const categories = [
       { name: "Roti Telur / Dhal", calories: 414 },
       { name: "Curry Puff (2 pcs)", calories: 400 },
       { name: "Chapati / Green Gravy", calories: 166 },
-      { name: "Half-boiled Eggs (2) / Plain Bread", calories: 227 },
-      { name: "Sardine Sandwiches", calories: 150 }
+      { name: "Half-boiled Eggs (2)", calories: 154 },
+      { name: "Kaya + Butter Toast (2 slices)", calories: 350 },
+      { name: "Sardine Sandwiches", calories: 150 },
+      { name: "Coffee Black (240ml)", calories: 15 },
+      { name: "Coffee with milk (240ml)", calories: 103 },
+      { name: "Coffee with milk + 1tsp Sugar (240ml)", calories: 143 }
     ]
   },
   {

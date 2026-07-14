@@ -11,8 +11,7 @@ function readProfileFields(body: Record<string, unknown> = {}) {
     height: Number(body.height),
     starting_weight: Number(body.starting_weight),
     target_weight: Number(body.target_weight),
-    bmr: Number(body.bmr),
-    workout_frequency: Number(body.workout_frequency) as 2 | 3 // validated in the service
+    bmr: Number(body.bmr)
   };
 }
 

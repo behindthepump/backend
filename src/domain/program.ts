@@ -1,13 +1,14 @@
-import type { WorkoutName } from "./types.js";
-
-// Workout slots per coach-set weekly frequency. Burn calories are entered
-// by the client at check-off, not fixed here.
-export const WORKOUT_SLOTS: Record<2 | 3, WorkoutName[]> = {
-  2: ["Lower Body", "Upper Body"],
-  3: ["Lower Body", "Upper Body Push", "Upper Body Pull"]
-};
-
-export const ALL_WORKOUT_NAMES = new Set<string>([...WORKOUT_SLOTS[2], ...WORKOUT_SLOTS[3]]);
+// Every checkable workout: all five coach sets (both splits are always
+// offered) plus the client's free-form "Personal" weekly entry. Burn
+// calories are entered by the client at check-off, not fixed here.
+export const ALL_WORKOUT_NAMES = new Set<string>([
+  "Lower Body",
+  "Upper Body",
+  "Lower Body (3-Day)",
+  "Upper Body Push",
+  "Upper Body Pull",
+  "Personal"
+]);
 
 export const MAX_WORKOUT_CALORIES = 3000;
 

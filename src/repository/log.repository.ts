@@ -28,7 +28,8 @@ export class LogRepository {
       workout_name: d.data().workout_name as WorkoutName,
       calories_burned: d.data().calories_burned ?? 0,
       completed: d.data().completed === true,
-      completed_at: d.data().completed_at ?? null
+      completed_at: d.data().completed_at ?? null,
+      notes: d.data().notes || undefined
     }));
   }
 
@@ -38,16 +39,6 @@ export class LogRepository {
     data: { calories: number; notes: string }
   ): Promise<void> {
     await this.user(uid).collection("calories").doc(date).set(data);
-  }
-
-  async hasCalorie(uid: string, date: string): Promise<boolean> {
-    const snap = await this.user(uid).collection("calories").doc(date).get();
-    return snap.exists;
-  }
-
-  async isWorkoutCompleted(uid: string, key: string): Promise<boolean> {
-    const snap = await this.user(uid).collection("workouts").doc(key).get();
-    return snap.exists && snap.data()?.completed === true;
   }
 
   async setWorkout(

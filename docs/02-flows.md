@@ -12,7 +12,7 @@ in [04-auth](04-auth.md).
    target weight. BMR is computed automatically.
 3. Wait on the **waitlist screen** until the coach approves. A declined
    request shows different copy but can still be approved later.
-4. On approval, the tracker opens at the coach-chosen start date and split.
+4. On approval, the tracker opens at the coach-chosen start date.
 
 ## Client: day to day
 
@@ -20,9 +20,11 @@ in [04-auth](04-auth.md).
   (notes optional). The **food reference panel** below lists common Malaysian
   foods; tapping **+** on a food adds its calories to the day's count. Future
   days are locked; past days can be edited.
-- **Workout Tracking** — tap a slot to check it off; the app asks for the
-  calories burned. Tap again to uncheck. Each slot expands to show its
-  Gym/Home exercise routine.
+- **Workout Tracking** — all five sets (2-day + 3-day groups) are listed
+  every week; tap any to check it off. The burn field comes prefilled from
+  BMR (editable). Tap again to uncheck — any week. A **Personal Workout
+  Routine** entry takes one self-calculated weekly total + notes. Each set
+  expands to show its Gym/Home exercise routine.
 - **Dashboard / Progress** — current week, estimated weight, deficit totals,
   week-by-week breakdown, and the trend toward the target.
 
@@ -31,8 +33,8 @@ in [04-auth](04-auth.md).
 The dashboard's **Requests** panel lists signups (name, goal with the weekly
 pace it implies, details on demand):
 
-- **Approve** — pick the program start date (snapped to that week's Monday)
-  and the 2-day/3-day split. The client becomes active immediately.
+- **Approve** — pick the program start date (snapped to that week's
+  Monday). The client becomes active immediately.
 - **Decline** — the request stays listed with a Declined badge and can be
   approved later.
 

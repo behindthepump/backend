@@ -27,18 +27,17 @@ all direct access (see [04-auth](04-auth.md#firestore-rules)).
 users/{uid}                  role, status (pending|active|declined), email,
                              name, name_lower, name_prefixes[], age, gender,
                              height, starting_weight, target_weight, bmr,
-                             program_start_date, workout_frequency (2|3),
+                             program_start_date, approved_at,
                              requested_at        (profile fields absent for coach)
 users/{uid}/calories/{date}  calories, notes            doc id = YYYY-MM-DD
 users/{uid}/workouts/{key}   week, workout_name, calories_burned (client-entered),
-                             completed, completed_at    key = w{week}_{slug}
+                             completed, completed_at, notes    key = w{week}_{slug}
 reference/foods              disclaimer, categories[{name, items[{name, calories}]}]
 ```
 
 Doc IDs are semantic (date, workout key), so every write is an idempotent
 upsert. **Workout docs are written on check-off, never pre-seeded** — the UI
-derives each week's slots from `workout_frequency` and treats a missing doc
-as unchecked.
+lists every set each week and treats a missing doc as unchecked.
 
 ## API
 
